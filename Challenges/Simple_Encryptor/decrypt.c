@@ -11,12 +11,13 @@
 
 
 int main() {
+    typedef unsigned char byte;
     char *path = "flag.enc";
     FILE *input_file = fopen(path, "rb");
     unsigned int time;
-    void *buffer_address;
+    byte *buffer_address;
     int random_1;
-    unsigned int random_2;
+    int random_2;
 
     fseek(input_file, 0, 2);
     size_t file_size = ftell(input_file);
@@ -26,21 +27,19 @@ int main() {
     fprintf(stdout, "time: %i\n", time);
     fread(buffer_address, file_size, 1, input_file);
     fclose(input_file);
-    fprintf(stdout, "Data encrypted: %ld\n!", (long) buffer_address);
+    fprintf(stdout, "Data encrypted: %ld\n", (long) buffer_address);
     srand(time);
 
-    for (int i = 0; i < (long) file_size; i++) {
+    for (int i = 0; i < (long) file_size - sizeof(time); i++) {
         random_1 = rand();
-        *(unsigned char *)((long)buffer_address + i) = *(unsigned char *)((long)buffer_address + i) ^ (char)random_1;
         random_2 = rand();
         random_2 = random_2 & 7;
-        *(unsigned char *)((long)buffer_address + i) = *(unsigned char *)((long)buffer_address + i) >> (char)random_1 &
-            *(unsigned char *)((long)buffer_address + i) << 8 + (char)random_1;
-        fprintf(stdout, "%x", (unsigned char) random_2);
+        buffer_address[i] = buffer_address[i] >> random_2 | buffer_address[i] << 8 - random_2;
+            
+        buffer_address[i] = random_1 ^ buffer_address[i];
     }
-    
-    fprintf(stdout, "!\nData decrypted: %ld\n", (long) buffer_address);
 
+    fprintf(stdout, "Flag: %s\n", buffer_address);
 
     return EXIT_SUCCESS;
 }
